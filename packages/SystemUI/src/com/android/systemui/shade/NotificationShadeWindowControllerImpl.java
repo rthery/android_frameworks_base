@@ -514,8 +514,9 @@ public class NotificationShadeWindowControllerImpl implements NotificationShadeW
     }
 
     private boolean isExpanded(NotificationShadeWindowState state) {
-        boolean isExpanded = !state.forceWindowCollapsed && (state.isKeyguardShowingAndNotOccluded()
-                || state.panelVisible || state.keyguardFadingAway || state.bouncerShowing
+        // forceWindowCollapsed must not hide keyguard or bouncer, e.g. the SIM PIN bouncer.
+        boolean isExpanded = state.isKeyguardShowingAndNotOccluded() || state.bouncerShowing
+                || !state.forceWindowCollapsed && (state.panelVisible || state.keyguardFadingAway
                 || state.headsUpNotificationShowing
                 || state.scrimsVisibility != ScrimController.TRANSPARENT)
                 || state.backgroundBlurRadius > 0
