@@ -84,6 +84,7 @@ public class QrCamera extends Handler {
     private MultiFormatReader mReader;
     private DecodingTask mDecodeTask;
     private int mCameraOrientation;
+    private int mDisplayRotation;
     @VisibleForTesting
     Camera.Parameters mParameters;
 
@@ -222,6 +223,7 @@ public class QrCamera extends Handler {
                 break;
         }
         final int rotateDegrees = (mCameraOrientation - degrees + 360) % 360;
+        mDisplayRotation = rotateDegrees;
         mCamera.setDisplayOrientation(rotateDegrees);
         mCamera.startPreview();
         if (Camera.Parameters.FOCUS_MODE_AUTO.equals(mParameters.getFocusMode())) {
@@ -374,6 +376,10 @@ public class QrCamera extends Handler {
 
     private QrYuvLuminanceSource getFrameImage(byte[] imageData) {
         final Rect frame = mScannerCallback.getFramePosition(mPreviewSize, mCameraOrientation);
+        // A sensor mounted the other way round shows the far end of its frame in the view.
+        if (mDisplayRotation == 180 || mDisplayRotation == 270) {
+            frame.offsetTo(mPreviewSize.getWidth() - frame.right, frame.top);
+        }
         final QrYuvLuminanceSource image = new QrYuvLuminanceSource(imageData,
                 mPreviewSize.getWidth(), mPreviewSize.getHeight());
         return (QrYuvLuminanceSource)
