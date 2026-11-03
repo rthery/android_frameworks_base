@@ -65,6 +65,9 @@ public class QrCamera extends Handler {
 
     private static final long AUTOFOCUS_INTERVAL_MS = 1500L;
 
+    /** Largest preview area to scan; every frame is decoded on the CPU. */
+    private static final int MAX_PREVIEW_PIXELS = 1280 * 960;
+
     private static Map<DecodeHintType, List<BarcodeFormat>> HINTS = new ArrayMap<>();
     private static List<BarcodeFormat> FORMATS = new ArrayList<>();
 
@@ -397,12 +400,20 @@ public class QrCamera extends Handler {
      * preview size and aspect ratio to choose the best one.
      */
     private Size getBestPreviewSize(Camera.Parameters parameters) {
+        final Size capped = getBestPreviewSize(parameters, MAX_PREVIEW_PIXELS);
+        return capped.getWidth() > 0 ? capped : getBestPreviewSize(parameters, Integer.MAX_VALUE);
+    }
+
+    private Size getBestPreviewSize(Camera.Parameters parameters, int maxPixels) {
         final double minRatioDiffPercent = 0.1;
         final Size windowSize = mScannerCallback.getViewSize();
         final double winRatio = getRatio(windowSize.getWidth(), windowSize.getHeight());
         double bestChoiceRatio = 0;
         Size bestChoice = new Size(0, 0);
         for (Camera.Size size : parameters.getSupportedPreviewSizes()) {
+            if (size.width * size.height > maxPixels) {
+                continue;
+            }
             double ratio = getRatio(size.width, size.height);
             if (size.height * size.width > bestChoice.getWidth() * bestChoice.getHeight()
                     && (Math.abs(bestChoiceRatio - winRatio) / winRatio > minRatioDiffPercent
