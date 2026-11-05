@@ -1670,6 +1670,10 @@ public class CachedAppOptimizer {
             // if the process moved out of cached state
             if (newAdj < oldAdj && newAdj < ProcessList.CACHED_APP_MIN_ADJ) {
                 cancelCompactionForProcess(app, CancelCompactReason.OOM_IMPROVEMENT);
+            } else if (!useFreezer() && oldAdj < ProcessList.CACHED_APP_MIN_ADJ
+                    && newAdj >= ProcessList.CACHED_APP_MIN_ADJ) {
+                // Without the freezer, onProcessFrozen() never runs: compact when cached.
+                compactApp(app, CompactProfile.FULL, CompactSource.APP, false);
             }
         }
     }
