@@ -786,6 +786,7 @@ public final class Zygote {
                     applyUidSecurityPolicy(args, peerCredentials);
                     // TODO (chriswailes): Should this only be run for debug builds?
                     validateUsapCommand(args);
+                    IoUtils.closeQuietly(tmpArgBuffer);
                     break;
                 } catch (Exception ex) {
                     Log.e("USAP", ex.getMessage());
@@ -833,6 +834,9 @@ public final class Zygote {
                             + ioEx.getMessage());
                     throw new RuntimeException(ioEx);
                 } finally {
+                    // Close the session socket before specializing; otherwise the app's
+                    // finalizer closes it later, from a domain that may not query zygote sockets.
+                    IoUtils.closeQuietly(sessionSocket);
                     try {
                         // Since the raw FD is created by init and then loaded from an environment
                         // variable (as opposed to being created by the LocalSocketImpl itself),
