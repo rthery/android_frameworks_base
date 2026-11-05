@@ -445,7 +445,8 @@ public class ZygoteProcess {
          */
         String msgStr = args.size() + "\n" + String.join("\n", args) + "\n";
 
-        if (shouldAttemptUsapLaunch(zygotePolicyFlags, args)) {
+        if (zygoteState == primaryZygoteState
+                && shouldAttemptUsapLaunch(zygotePolicyFlags, args)) {
             try {
                 return attemptUsapSendArgsAndGetResult(zygoteState, msgStr);
             } catch (IOException ex) {
@@ -1213,6 +1214,9 @@ public class ZygoteProcess {
      */
     private void informZygotesOfUsapPoolStatus() {
         final String command = "1\n--usap-pool-enabled=" + mUsapPoolEnabled + "\n";
+        // Only the primary zygote keeps a pool: a secondary (32-bit) pool shares little with
+        // the rest of the system and is rarely used.
+        final String secondaryCommand = "1\n--usap-pool-enabled=false\n";
 
         synchronized (mLock) {
             try {
@@ -1232,7 +1236,7 @@ public class ZygoteProcess {
                     attemptConnectionToSecondaryZygote();
 
                     try {
-                        secondaryZygoteState.mZygoteOutputWriter.write(command);
+                        secondaryZygoteState.mZygoteOutputWriter.write(secondaryCommand);
                         secondaryZygoteState.mZygoteOutputWriter.flush();
 
                         // Wait for the secondary Zygote to finish its work.
