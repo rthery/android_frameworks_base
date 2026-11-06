@@ -946,6 +946,27 @@ public class PersistentDataBlockServiceTest {
     }
 
     @Test
+    public void frpState_DeactivationWithoutFrpPackageRestoresDefaultSecret() throws Exception {
+        setUp(/* frpEnforcement */ true);
+        grantConfigureFrpPermission();
+
+        assertThat(mInterface.setFactoryResetProtectionSecret(hashStringto32Bytes("secret")))
+                .isTrue();
+
+        simulateDataWipe();
+        mPdbService.activateFrp();
+        mPdbService.setAllowedUid(-1);
+
+        assertThat(mInternalInterface.deactivateFactoryResetProtectionWithoutSecret()).isTrue();
+        assertThat(mPdbService.isFrpActive()).isFalse();
+
+        simulateDataWipe();
+        mPdbService.activateFrp();
+        assertThat(mPdbService.automaticallyDeactivateFrpIfPossible()).isTrue();
+        assertThat(mPdbService.isFrpActive()).isFalse();
+    }
+
+    @Test
     public void frpActive_WipeFails() throws Exception {
         setUp(/* frpEnforcement */ true);
 

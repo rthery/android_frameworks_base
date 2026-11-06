@@ -1328,6 +1328,10 @@ public class PersistentDataBlockService extends SystemService {
                 mFrpActive = false;
                 setOldSettingForBackworkCompatibility(/* isActive */ mFrpActive);
             }
+            // Without an FRP management package nothing else can replace the secret.
+            if (mFrpEnforced && mAllowedUid == -1) {
+                updateFrpSecret(new byte[FRP_SECRET_SIZE]);
+            }
             return true;
         }
 
